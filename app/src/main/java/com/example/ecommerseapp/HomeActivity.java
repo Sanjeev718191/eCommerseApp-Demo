@@ -94,6 +94,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
+
+        //set on item click listener on navigation view
+        if (navigationView != null) {
+            navigationView.setNavigationItemSelectedListener(this);
+        }
     }
 
     @Override
@@ -167,7 +172,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         } else if(id == R.id.nav_categories){
 
         }else if(id == R.id.nav_setting){
-
+            Intent intent = new Intent(HomeActivity.this, SettingsActivity.class);
+            startActivity(intent);
         }else if(id == R.id.nav_logout){
             Paper.book().destroy();
             Intent intent = new Intent(HomeActivity.this, MainActivity.class);
