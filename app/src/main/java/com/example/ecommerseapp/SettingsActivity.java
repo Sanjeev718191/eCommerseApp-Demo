@@ -1,9 +1,5 @@
 package com.example.ecommerseapp;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
@@ -13,6 +9,13 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.ecommerseapp.Prevalent.Prevalent;
 import com.google.android.gms.tasks.Continuation;
@@ -27,9 +30,11 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StorageTask;
 import com.squareup.picasso.Picasso;
+import com.yalantis.ucrop.UCrop;
 
+import java.io.File;
 import java.util.HashMap;
-import java.util.Set;
+import java.util.UUID;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -44,6 +49,8 @@ public class SettingsActivity extends AppCompatActivity {
     private StorageReference storageProfilePrictureRef;
 
     private String checker = "";
+
+    ActivityResultLauncher<String> mGetContent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,17 +87,29 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+
         profileChangeTextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 checker = "clicked";
-
-//                CropImage.activity(imageUri)
-//                        .setAspectRatio(1,1)
-//                        .start(SettingsActivity.this);
-
+                mGetContent.launch("image/*");
             }
         });
+
+        mGetContent = registerForActivityResult(new ActivityResultContracts.GetContent(), new ActivityResultCallback<Uri>() {
+            @Override
+            public void onActivityResult(Uri result) {
+                String dest_uri = new StringBuilder(UUID.randomUUID().toString()).append(".jpg").toString();
+                UCrop.Options options = new UCrop.Options();
+                options.setCircleDimmedLayer(true);
+                UCrop.of(result, Uri.fromFile(new File(getCacheDir(),dest_uri)))
+                        .withOptions(options)
+                        .useSourceImageAspectRatio()
+                        .withMaxResultSize(2000, 2000)
+                        .start(SettingsActivity.this);
+            }
+        });
+
     }
 
     private void updateOnlyUserInfo() {
@@ -112,17 +131,12 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-//        if(requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK && data!=null){
-//            CropImage.ActivityResult result = CropImage.getActivityResult(data);
-//            imageUri = result.getUri();
-//
-//            profileImageView.setImageURI(imageUri);
-//        } else {
-//            Toast.makeText(this, "Try again", Toast.LENGTH_SHORT).show();
-//
-//            startActivity(new Intent(SettingsActivity.this, SettingsActivity.class));
-//            finish();
-//        }
+        if(resultCode == RESULT_OK && requestCode==UCrop.REQUEST_CROP) {
+            imageUri = UCrop.getOutput(data);
+            profileImageView.setImageURI(imageUri);
+        } else if(resultCode == UCrop.RESULT_ERROR){
+            final Throwable cropError = UCrop.getError(data);
+        }
     }
 
 
@@ -198,7 +212,8 @@ public class SettingsActivity extends AppCompatActivity {
                         }
                     });
         } else {
-            Toast.makeText(this, "image is not selected.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Image is not selected.", Toast.LENGTH_SHORT).show();
+            progressDialog.dismiss();
         }
 
     }

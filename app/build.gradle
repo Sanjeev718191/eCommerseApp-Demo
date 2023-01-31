@@ -66,6 +66,6 @@ dependencies {
     //circular imageview
     implementation 'de.hdodenhof:circleimageview:3.1.0'
 
-    //ArthurHub Android-Image-Cropper
-    implementation 'com.theartofdev.edmodo:android-image-cropper:2.7.+'
+    //UCrop  image cropper
+    implementation 'com.github.krokyze:ucropnedit:2.2.8'
 }
